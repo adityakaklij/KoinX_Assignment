@@ -8,8 +8,6 @@ const app = express()
 const port = 3000;
 
 const ETH_API= process.env.ETHERSCAN_API
-const dbURL = `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@koinxassignment.cibtqqz.mongodb.net/?retryWrites=true&w=majority`
-
 
 const start = async() => {
     await connectDB(process.env.MONGODB_URL)
@@ -30,21 +28,21 @@ const getDataFromETHScan = async(_address) => {
         // console.log("data:- ", data)
         for (let i = 0; i < (data.result).length; i ++ ){
 
-            console.log("Block Hash",data.result[i].hash) // Hash of the tx.
-            console.log("Block timeStamp",data.result[i].timeStamp) // Time stamp 
-            console.log( "From:- ", data.result[i].from) // from address
-            console.log("to:- ",data.result[i].to) // to address
-            console.log("Value:- ",data.result[i].value) // Amount of ETH transfer
-            console.log("Is Error:- ",data.result[i].isError) // 0 or 1
-            console.log("functionName:- ",data.result[i].functionName)
+            // console.log("Block Hash",data.result[i].hash) // Hash of the tx.
+            // console.log("Block timeStamp",data.result[i].timeStamp) // Time stamp 
+            // console.log( "From:- ", data.result[i].from) // from address
+            // console.log("to:- ",data.result[i].to) // to address
+            // console.log("Value:- ",data.result[i].value) // Amount of ETH transfer
+            // console.log("Is Error:- ",data.result[i].isError) // 0 or 1
+            // console.log("functionName:- ",data.result[i].functionName)
 
             let valueInETH = Web3.utils.fromWei(data.result[i].value, 'ether')
             requiredData.push([  data.result[i].from, data.result[i].to, valueInETH, data.result[i].timeStamp ])
             console.log("user Data given")
         }
-        
-        
     })
+
+    // Storing the data as address => arrar [user's all txs (From, to, value, timestamp)]
     const user = new UserSchema({"address": _address, normalTx : requiredData })
     user.save((err) => {
     if(err){
@@ -62,7 +60,6 @@ const getDataFromETHScan = async(_address) => {
 
 app.get('/', (req, res) => {
     res.send("Inside the get!")
-    // connectToDB()
 })
 
 
@@ -72,7 +69,6 @@ app.get('/address/:add', async (req, res) => {
     let m  = await getDataFromETHScan(req.params.add)
     res.send(m)
 })
-
 
 
 // Task 2
