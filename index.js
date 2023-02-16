@@ -16,18 +16,6 @@ const ETH_API= process.env.ETHERSCAN_API
 const dbURL = `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@koinxassignment.cibtqqz.mongodb.net/?retryWrites=true&w=majority`
 
 
-const connectToDB = async() => {
-    const client = await  mongoose.connect(dbURL)
-    
-    console.log("Indide the function")
-
-    
-    // const SomeModel = mongoose.model("UserTxDB", UserTxDb);
-    console.log("SomeMode;")
-    
-}
-
-
 const start = async() => {
     await connectDB(process.env.MONGODB_URL)
     // getETHPrice(); // Continous fun to retrive the price
@@ -139,9 +127,49 @@ app.get('/balance/:add', async (req, res) => {
     console.log(req.params.add)
     let balance = await getUserBalance(req.params.add)
     console.log("Balance:- ", balance)
-    res.send(  `Balance of user:-  ${balance[0]} \n Current value:- ₹ ${balance[1]}`)
+    res.send(  `Balance of user:-  ${balance[0]} \n Current value:- ₹ ${balance[1]} \n the above balance is /n fetched using EtherScan APIs /n `)
 })
 
+app.get('/getDB/:add', async (req, res) => {
+    console.log(req.params.add)
+    let userAddress = req.params.add
+    let UserBalanceStart = 0;
+    User.find({address:req.params.add}, function(err, user) {
+        if(err){
+            console.log(err)
+        }
+        else{
+            let userDetails = (user[0].normalTx)
+            // console.log(userDetails)
+
+            let UserBalance = 0
+            for(let i = 0; i < userDetails.length; i ++){
+                // let from_Address = userDetails[i][0] // From Address
+                // let to_Address = userDetails[i][1] // To Address 
+                let token_value = userDetails[i][2]
+                if (((userDetails[i][1]).localeCompare(userAddress)) === 1) {
+                    console.log("Inside -")
+                    UserBalance -= parseFloat(token_value)
+                }
+                else {
+                    console.log("Inside +")
+                    UserBalance += parseFloat(token_value)
+                }
+            }
+            UserBalanceStart += UserBalance
+
+            console.log("UserBalance = ", UserBalance)
+            console.log("UserBalanceStart = ", UserBalanceStart)
+            
+            console.log(("Done"))
+            res.send(  `Balance of user ${req.params.add} is ${UserBalanceStart} ETH, it's not accurate as we are not deducting the gas fee that user spent!`)
+        }
+    })
+    console.log("UserBalance = ", UserBalanceStart)
+
+})
+
+//address 0x056397760b973BfB921Bc10Be9DA5034B1e921d7
 
 
 
