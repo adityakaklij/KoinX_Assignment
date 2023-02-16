@@ -1,7 +1,7 @@
 const express = require('express')
 require("dotenv").config();
 const mongoose = require('mongoose')
-const User = require('./DB/UserModel') 
+const User = require('./DB/userSchema') 
 const connectDB = require('./DB/Connect'); 
 const { ethers } = require('ethers');
 const Web3 = require('web3');
@@ -16,38 +16,20 @@ const ETH_API= process.env.ETHERSCAN_API
 const dbURL = `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@koinxassignment.cibtqqz.mongodb.net/?retryWrites=true&w=majority`
 
 
-// const connectToDB = async() => {
+const connectToDB = async() => {
+    const client = await  mongoose.connect(dbURL)
     
-//     console.log("Indide the function")
-//     await  mongoose.connect(dbURL)
-//     console.log("Connected")
-    
+    console.log("Indide the function")
 
     
-//     console.log("UserTXDB Schama defined")
+    // const SomeModel = mongoose.model("UserTxDB", UserTxDb);
+    console.log("SomeMode;")
     
-//     const SomeModel = mongoose.model("UserTxDB", UserTxDb);
-//     console.log("SomeMode;")
-    
-//     // const userData = new SomeModel({"address": "1234", "to_address": "4321","From_address": "9876", "Value" : "444333444"})
-//     const userData = new SomeModel({"address": "2nd", "to_address": "2nd to address","From_address": "2nd from", "Value" : "00999898"})
-//     console.log("user Data given")
-//     userData.save((err) => {
-//         if(err){
-//             console.log(err)
-//         }
-//         else{
-//             console.log("Saved !!!!!")
-//         }
-//     })
-
-// }
+}
 
 
 const start = async() => {
-    // await connectDB(process.env.MONGODB_URL)
-
-    
+    await connectDB(process.env.MONGODB_URL)
     // getETHPrice(); // Continous fun to retrive the price
     
     app.listen(port, () => {
@@ -60,21 +42,37 @@ const start = async() => {
 // Task 1
 // Fetching Normal Tx
 const getDataFromETHScan = async(_address) => {
-
+    
+    let requiredData = []
     const tx = await fetch(`https://api.etherscan.io/api?module=account&action=txlist&address=${_address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${ETH_API}`).then(res => res.json()).then(data => {
-        console.log("data:- ", data)
+        // console.log("data:- ", data)
         for (let i = 0; i < (data.result).length; i ++ ){
 
             console.log("Block Hash",data.result[i].hash) // Hash of the tx.
-            console.log("Block Hash",data.result[i].timeStamp) // Time stamp 
+            console.log("Block timeStamp",data.result[i].timeStamp) // Time stamp 
             console.log( "From:- ", data.result[i].from) // from address
             console.log("to:- ",data.result[i].to) // to address
             console.log("Value:- ",data.result[i].value) // Amount of ETH transfer
             console.log("Is Error:- ",data.result[i].isError) // 0 or 1
             console.log("functionName:- ",data.result[i].functionName)
+
+            let valueInETH = Web3.utils.fromWei(data.result[i].value, 'ether')
+            requiredData.push([  data.result[i].from, data.result[i].to, valueInETH, data.result[i].timeStamp ])
+            console.log("user Data given")
         }
-      
+        
+        
     })
+    const user = new User({"address": _address, normalTx : requiredData })
+    user.save((err) => {
+    if(err){
+        console.log(err)
+    }
+    else{
+        console.log("Saved !!!!!")
+    }
+    })
+    console.log("requiredData",requiredData)
 
     return "Done with calling the address"
 }
@@ -143,6 +141,7 @@ app.get('/balance/:add', async (req, res) => {
     console.log("Balance:- ", balance)
     res.send(  `Balance of user:-  ${balance[0]} \n Current value:- ₹ ${balance[1]}`)
 })
+
 
 
 

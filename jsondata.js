@@ -252,5 +252,6 @@ console.log(weiValue);
 const etherValue = Web3.utils.fromWei('1000000000000000000', 'ether');
 console.log(etherValue);
 
+
   // List of tx.
 //   address -> details
