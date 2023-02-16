@@ -1,5 +1,8 @@
 // Test data from Normal tx.
 
+const { ethers } = require("ethers")
+const Web3 = require('web3');
+
 let m = {
     status: '1',
     message: 'OK',
@@ -228,16 +231,26 @@ let m = {
   }
   
 
-  for (let i = 0; i < (m.result).length; i ++ ){
+  // for (let i = 0; i < (m.result).length; i ++ ){
 
-      console.log("Block Hash",m.result[i].blockHash)
-      console.log( "From:- ", m.result[i].from)
-      console.log("to:- ",m.result[i].to)
-      console.log("Value:- ",m.result[i].value)
-      console.log("Is Error:- ",m.result[i].isError)
-      console.log("functionName:- ",m.result[i].functionName)
-  }
+  //     console.log("Block Hash",m.result[i].blockHash)
+  //     console.log( "From:- ", m.result[i].from)
+  //     console.log("to:- ",m.result[i].to)
+  //     console.log("Value:- ",m.result[i].value)
+  //     console.log("Is Error:- ",m.result[i].isError)
+  //     console.log("functionName:- ",m.result[i].functionName)
+  // }
 
+  // ethers.utils.parseUnits("10","ether")
+
+  // let m2 = ethers.utils.parseUnits("10000","ether")
+  // console.log(m2)
+
+const weiValue = Web3.utils.toWei('1', 'ether');
+console.log(weiValue);
+
+const etherValue = Web3.utils.fromWei('1000000000000000000', 'ether');
+console.log(etherValue);
 
   // List of tx.
 //   address -> details

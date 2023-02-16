@@ -2,7 +2,9 @@ const express = require('express')
 require("dotenv").config();
 const mongoose = require('mongoose')
 const User = require('./DB/UserModel') 
-const connectDB = require('./DB/Connect') 
+const connectDB = require('./DB/Connect'); 
+const { ethers } = require('ethers');
+const Web3 = require('web3');
 
 const app = express()
 const port = 3000;
@@ -11,7 +13,7 @@ const ETH_API= process.env.ETHERSCAN_API
 
 // let data = [{}]
 
-const dbURL = `mongodb+srv://${root}:${root}@koinxassignment.cibtqqz.mongodb.net/?retryWrites=true&w=majority`
+const dbURL = `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@koinxassignment.cibtqqz.mongodb.net/?retryWrites=true&w=majority`
 
 
 // const connectToDB = async() => {
@@ -94,27 +96,53 @@ app.get('/address/:add', async (req, res) => {
 
 // Task 2
 // Fetching ETH price, 10 min interval
-
 const getETHPrice = async() => {
-
     setInterval ( async () => {
-
         const tx = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr`).then(res => res.json()).then(details => {
             console.log("data:- ", details.ethereum.inr)      
-            // ETHINR =  data.ethereum.inr
-            // res.send(`Current Price:-  ${ETHINR}` )
         })
     }, 600000);
 }
 
-function testTimeout() {
+const getETHCurrentPrice = async() => {
+    let currentPrice;
+    const tx = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr`).then(res => res.json()).then(details => {
+            console.log("data:- ", details.ethereum.inr)      
+            currentPrice = details.ethereum.inr
+    })
 
-    setInterval(function(){
-        getETHPrice()
-    }, 600000);
-    
-    console.log("setTimeout() example...");
+    return currentPrice;
 }
+
+
+// Task 3
+// Fetch details of address
+// This task can be completed with 2 ways
+// Using Ether scan APIs
+// Or with etherjs, directly calling the address with RPC end point.
+
+// From EtherScan APIs
+const getUserBalance = async (_userAddress) => {
+    let userBal
+    const tx = await fetch(`https://api.etherscan.io/api?module=account&action=balance&address=${_userAddress}&tag=latest&apikey=${ETH_API}`).then(res => res.json()).then(bal => {
+        console.log("balance:- ", bal)      
+        console.log("balance. result:- ", bal.result)
+        userBal = bal.result
+    })
+    const etherValue = Web3.utils.fromWei(userBal, 'ether');
+    console.log("etherValue", etherValue)
+    let inrPrice = await getETHCurrentPrice()
+    let price = etherValue * inrPrice;
+    console.log("Price:- ", price)
+    return [etherValue, price];
+}
+
+app.get('/balance/:add', async (req, res) => {
+    console.log(req.params.add)
+    let balance = await getUserBalance(req.params.add)
+    console.log("Balance:- ", balance)
+    res.send(  `Balance of user:-  ${balance[0]} \n Current value:- ₹ ${balance[1]}`)
+})
 
 
 
