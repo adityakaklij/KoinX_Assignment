@@ -1,34 +1,28 @@
 const express = require('express')
 require("dotenv").config();
-const mongoose = require('mongoose')
-const User = require('./DB/userSchema') 
+const {UserSchema, ethPrice} = require('./DB/userSchema') 
 const connectDB = require('./DB/Connect'); 
-const { ethers } = require('ethers');
 const Web3 = require('web3');
 
 const app = express()
 const port = 3000;
 
 const ETH_API= process.env.ETHERSCAN_API
-
-// let data = [{}]
-
 const dbURL = `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@koinxassignment.cibtqqz.mongodb.net/?retryWrites=true&w=majority`
 
 
 const start = async() => {
     await connectDB(process.env.MONGODB_URL)
-    // getETHPrice(); // Continous fun to retrive the price
+    getETHPrice(); // Continous fun to retrive the price
     
     app.listen(port, () => {
         console.log("Listing on the port")
     })
-
-
 }
 
 // Task 1
 // Fetching Normal Tx
+// And Storing the data to MongoDB
 const getDataFromETHScan = async(_address) => {
     
     let requiredData = []
@@ -51,7 +45,7 @@ const getDataFromETHScan = async(_address) => {
         
         
     })
-    const user = new User({"address": _address, normalTx : requiredData })
+    const user = new UserSchema({"address": _address, normalTx : requiredData })
     user.save((err) => {
     if(err){
         console.log(err)
@@ -76,16 +70,31 @@ app.get('/', (req, res) => {
 app.get('/address/:add', async (req, res) => {
     console.log(req.params.add)
     let m  = await getDataFromETHScan(req.params.add)
-    // res.send(`We got ${req.params.add}`)
     res.send(m)
 })
 
+
+
 // Task 2
 // Fetching ETH price, 10 min interval
+// Storing the value with the timeStamp
 const getETHPrice = async() => {
     setInterval ( async () => {
+        let curreentPrice;
+        let  date = new Date()
         const tx = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr`).then(res => res.json()).then(details => {
             console.log("data:- ", details.ethereum.inr)      
+            curreentPrice =  details.ethereum.inr      
+        })
+
+        const user = new ethPrice({"ETHPrice": curreentPrice, Time_Stamp : date })
+        user.save((err) => {
+        if(err){
+            console.log(err)
+        }
+        else{
+            console.log("Date save !!!!!")
+        }
         })
     }, 600000);
 }
@@ -106,6 +115,8 @@ const getETHCurrentPrice = async() => {
 // This task can be completed with 2 ways
 // Using Ether scan APIs
 // Or with etherjs, directly calling the address with RPC end point.
+
+// Also, Fetchd the data from the DataBase, But the User balance is not accurate, as I didn't deducted the gas fees paid by the user.
 
 // From EtherScan APIs
 const getUserBalance = async (_userAddress) => {
@@ -130,11 +141,12 @@ app.get('/balance/:add', async (req, res) => {
     res.send(  `Balance of user:-  ${balance[0]} \n Current value:- ₹ ${balance[1]} \n the above balance is /n fetched using EtherScan APIs /n `)
 })
 
+// Fetching the user balance from the database
 app.get('/getDB/:add', async (req, res) => {
     console.log(req.params.add)
     let userAddress = req.params.add
     let UserBalanceStart = 0;
-    User.find({address:req.params.add}, function(err, user) {
+    UserSchema.find({address:req.params.add}, function(err, user) {
         if(err){
             console.log(err)
         }
@@ -168,9 +180,5 @@ app.get('/getDB/:add', async (req, res) => {
     console.log("UserBalance = ", UserBalanceStart)
 
 })
-
-//address 0x056397760b973BfB921Bc10Be9DA5034B1e921d7
-
-
 
 start()

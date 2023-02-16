@@ -13,5 +13,14 @@ const userSchema = mongoose.Schema({
     
 })
 
+const ETHPrice = mongoose.Schema({
+    ETHPrice: {type:String},
+    Time_Stamp: {type:String}
+})
 
-module.exports = mongoose.model('KoinXNormalTx', userSchema)
+
+// module.exports = mongoose.model('KoinXNormalTx', userSchema )
+const UserSchema=  mongoose.model('KoinXNormalTx', userSchema )
+const ethPrice  = mongoose.model('KoinXETHPrice', ETHPrice)
+
+module.exports = {UserSchema, ethPrice}
